@@ -108,9 +108,12 @@ class NeuralNetwork:
             self.output_layer[iOUT].setInput(self.middle_layer[self.middle_n] * self.w_mo[self.middle_n][iOUT])
             self.output_layer[iOUT].getOutput()
 
+        #for iOUT in range (self.out_n):
+            #print self.output_layer[iOUT].output
+
         return self.output_layer
 
-    def learn(self, inputData, outputData)
+    def learn(self, inputData, outputData):
         # 各層のリセット
         for iMID in range (self.middle_n):
             self.middleBP_layer[iMID].reset()
@@ -125,13 +128,13 @@ class NeuralNetwork:
             nwOutputData.append(nwResult[i].output)
         
         #学習係数
-        k = 0.3
+        k = 0.995
 
         #BPようにメソッド作ったほうがよいのでは
-        #出力層→
+        #出力層
         for iOUT in range(self.out_n):
-            self.outputBP_layer[iOUT].setInput(1.0 - nwResult[iOUT]) * nwResult[iOUT] * 2 * ( nwResult[iOUT] - outputData[iOUT] ) 
-            #delta_w_mo = (outputData[iOUT] - nwResult[iOUT]) * nwResult[iOUT] * (1.0 - nwResult[iOUT]) * 2
+            self.outputBP_layer[iOUT].setInput( (1.0 -  nwOutputData[iOUT] ) *  nwOutputData[iOUT] * 2 * ( nwOutputData[iOUT] - outputData[iOUT] ) )
+            print   nwOutputData[iOUT]
 
         #中間層
         for iMID in range(self.middle_n):
@@ -147,17 +150,22 @@ class NeuralNetwork:
         #中間層→入力層
         for post in range(self.middle_n):
             for pre in range(self.in_n):
-                self.w_im[pre][post] -= k * self.middleBP_layer[post].output *  self.input_layer[pre].output #self.input_layer[pre].output多分sigmoidじゃない
+                self.w_im[pre][post] -= k * self.middleBP_layer[post].output *  self.input_layer[pre] 
+                #self.input_layer[pre].output多分sigmoidじゃない Neuron()じゃない
+                
+        return self
         
 #テスト実行
-inputData = [-700, 8.9, 0.9, 0.65, 0.3, 0.3, -0.7, 8.9, 0.9, 0.65,10]
-
+inputData = [0, 1]
+outputData = [1, 0]
 
 testNW = NeuralNetwork()
-NeuralNetwork.initialize(testNW, 11, 7, 6)
+NeuralNetwork.initialize(testNW, 2, 3, 2)
 NeuralNetwork.resetW(testNW)
 
-testOut = testNW.commit(inputData)
+for i in range(1000000):
+    print "###################"
+    testNW.learn(inputData, outputData)
 
 
 
