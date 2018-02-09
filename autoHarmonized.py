@@ -124,7 +124,7 @@ class NeuralNetwork:
         nwOutputData = [] #0-1
         for i in range(self.out_n):
             nwOutputData.append(nwResult[i].output)
-            print nwResult[i].output
+            print -math.log(1/nwResult[i].output - 1 )
 
         #学習係数
         k = 0.8
@@ -159,18 +159,20 @@ class NeuralNetwork:
 testNW = NeuralNetwork()
 NeuralNetwork.initialize(testNW, 3, 10, 3)
 
-for i in range(20000):
-    i1 = random.uniform(0,1)
-    i2 = random.uniform(0,1)
-    i3 = random.uniform(0,1)
+for i in range(200000):
+    i1 = random.uniform(-1,1)
+    i2 = random.uniform(-1,1)
+    i3 = random.uniform(-1,1)
+
     
-    inputData = [i1, i2, i3]
-    outputData = [i1*0.5, i2*0.5, i3*0.5]
+    inputData = [sigmoid(i1), sigmoid(i2), sigmoid(i3)]
+    outputData = [sigmoid(i1*0.75), sigmoid(i2*0.5), sigmoid(i3*0.1)]
     print "###################"
     NeuralNetwork.learn(testNW ,inputData, outputData)
 
 print "#TEST##################"
-NeuralNetwork.learn(testNW ,[0,0.4,0.4], [0,0.2,0.2])
+NeuralNetwork.learn(testNW ,[sigmoid(0),sigmoid(-0.4),sigmoid(0.4)], [sigmoid(0*0.75),sigmoid(-0.4*0.5),sigmoid(0.4*0.1)])
 print "#TEST##################"
-NeuralNetwork.learn(testNW ,[0.4,0.6,0.3], [0.2,0.3,0.15])
+NeuralNetwork.learn(testNW ,[sigmoid(0.4),sigmoid(0.6),sigmoid(0.3)], [sigmoid(0.4*0.75),sigmoid(0.6*0.5),sigmoid(0.3*0.1)])
+
 
