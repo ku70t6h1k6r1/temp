@@ -29,7 +29,7 @@ class CreateMelody:
 
         for i in range(note_n):
             melody.append(dice(self.pitchWeight))
-        return melody
+        return np.array(melody)
 
     def translateMelody(self,melody):
         output = []
