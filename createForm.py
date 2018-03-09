@@ -27,10 +27,10 @@ def create(bars_n, n, lastNote):
 
     return melody
 
-rehC = create(4,4,0)
-rehA = create(8,2,7)
-song = np.r_[rehA, rehC]
-print song
+#rehC = create(4,4,0)
+#rehA = create(8,2,7)
+#song = np.r_[rehA, rehC]
+#print song
 
 
 #rehC_rythm = np.r_[rehC_rythm, rehC_rythm]
