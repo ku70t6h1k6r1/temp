@@ -3,7 +3,28 @@ import math
 import random
 import numpy as np
 import createForm as form
+import createRythmTruck as rythmTruck
 from scipy import stats
+
+def dice(pkIn):
+    # カテゴリカル分布（歪んだサイコロ）
+    xk = np.arange(len(pkIn))
+    pk = (pkIn)
+    custm = stats.rv_discrete(name='custm', values=(xk, pk))
+
+    return (custm.rvs(size=1))[0]
+
+def throwSomeCoins(pOn, n):
+    omote = 0
+
+    for i in range(n):
+        omote += dice([1 - pOn, pOn ])
+
+    if omote > 0:
+        return 1
+    else :
+        return 0
+
 
 # シグモイド関数
 def sigmoid(a):
@@ -114,14 +135,14 @@ class NeuralNetwork:
 
 #コード
 class Chord:
-    IM7 = [0,4,7,11]
-    I7 = [0,4,7,10]
-    Isus4M7 = [0,5,7,11]
-    Isus47 = [0,5,9,10]
-    Im7 = [0,3,7,10]
-    ImM7 = [0,3,7,11]
-    Imb57= [0,3,6,10]
-    Idim7 = [0,3,6,9]
+    IM7 = [0,4,11]
+    I7 = [0,4,10]
+    Isus4M7 = [0,5,11]
+    Isus47 = [0,5,10]
+    Im7 = [0,3,10]
+    ImM7 = [0,3,11]
+    Imb57= [0,3,10]
+    Idim7 = [0,3,9]
 
     chordTones = []
 
@@ -150,10 +171,17 @@ class Chord:
         return self.chordTones
 
 class CreateMelody:
+    def __init__(self):
+        chordObj = Chord()
+        self.voice = chordObj.output()
+        self.chordNo = -1
+
+        self.chordIndex = -1
+        self.root = -1
 
     def create(self):
         rehC = form.create(4,4,0)
-        rehA = form.create(8,2,7)
+        rehA = form.create(8,2,0)
         melody = np.r_[rehA, rehC]
         return melody
 
@@ -168,11 +196,12 @@ class CreateMelody:
         return output
 
     def chord(self,chords):
-        chordNo = chords.argmax()
-        chordIndex = chordNo % 8
-        root = int(chordNo % 8)
-        # only root note returned
-        return root
+        self.chordNo = chords.argmax()
+        self.root = int(self.chordNo * 1.0 / 8)
+        self.chordIndex = self.chordNo % 8
+
+        # Is this correctly?
+        #return voice[root][chordIndex]
 #テスト実行
 
 harmonizeNW = NeuralNetwork()
@@ -181,7 +210,7 @@ NeuralNetwork.resetW(harmonizeNW)
 
 melodyObj = CreateMelody()
 melody = melodyObj.create()
-chords = np.full(len(melody)/8, -1)
+chords = np.full(len(melody), -1)
 
 for i in range(len(melody)/8):
     melodyForMachine = melodyObj.translateMelody(melody[i*8 : (i+1)*8])
@@ -189,10 +218,19 @@ for i in range(len(melody)/8):
     outputLayer = np.zeros(96)
     for j in range(96):
         outputLayer[j] = tempOutputLayer[j].output
-    chords[i] = melodyObj.chord(outputLayer)
+    melodyObj.chord(outputLayer)
+    chords[i*8 : (i+1)*8] = melodyObj.chordNo
+
 
 print melody
 print chords
+
+#make groove
+dr_rythm = rythmTruck.merge(rythmTruck.pickUpAccent(melody), rythmTruck.pickUpSecAccent(melody), 0.0005)
+dr2_rythm = rythmTruck.merge(rythmTruck.pickUpAccent(melody), rythmTruck.pickUpSecAccent(melody), 0.001)
+dr3_rythm = rythmTruck.merge(rythmTruck.pickUpAccent(melody), rythmTruck.pickUpSecAccent(melody), 0.01)
+ba_rythm = rythmTruck.merge(rythmTruck.pickUpAccent(melody), rythmTruck.pickUpSecAccent(melody), 0.0004)
+
 
 ####
 #midiout
@@ -201,11 +239,11 @@ from time import sleep
 
 pygame.init()
 pygame.midi.init()
-input_id = pygame.midi.get_default_input_id()
+#input_id = pygame.midi.get_default_input_id()
 output_id = pygame.midi.get_default_output_id()
-print("input MIDI:%d" % input_id)
+#print("input MIDI:%d" % input_id)
 print("output MIDI:%d" % output_id)
-input = pygame.midi.Input(input_id)
+#input = pygame.midi.Input(input_id)
 o = pygame.midi.Output(output_id)
 
 print ("starting")
@@ -214,25 +252,62 @@ print ("full midi_events:[[[status,data1,data2,data3],timestamp],...]")
 i = 0
 note_past = 60
 note_past_bs = 60
+note_past_v1 = 60
+note_past_v2 = 60
 
-o.set_instrument(4,0)
-o.set_instrument(4,1)
+o.set_instrument(8,0) #Lead
+o.set_instrument(4,1) #ba
+o.set_instrument(4,2) #backing
+o.set_instrument(53,3) #Lead2
+o.set_instrument(25,9) #drum
+
+sleepTime = np.random.normal(0.2,0.1)
 for note in melody:
+
+    #Lead
     if note != -1 :
         o.note_off(note_past, 60, 0)
-        o.note_on(note + 60,int(np.random.normal(45,15)),0)
+        o.note_on(note + 60,int(np.random.normal(45,5)),0)
+
+        o.note_off(note_past, 60, 3)
+        o.note_on(note + 60,int(np.random.normal(21,5)),3)
+
         note_past = note + 60
-    if i % 8 == 0:
+    #Dr
+    if i % 16 == 0:
+        o.note_on(36, 50, 9)
+    else:
+        o.note_on(dice([1 - dr_rythm[i] , dr_rythm[i] ]) * 36,50,9)
+        o.note_on(dice([1 - dr2_rythm[i] , dr2_rythm[i] ]) * 39,50,9)
+
+    throwSomeCoins
+    o.note_on(throwSomeCoins(dr3_rythm[i],20) * 42,20,9)
+    #o.note_on(42,20,9)
+
+    #Ba
+    #baOn = dice([1 - ba_rythm[i] , ba_rythm[i] ]) + dice([1 - ba_rythm[i] , ba_rythm[i] ]) + dice([1 - ba_rythm[i] , ba_rythm[i] ])
+    baOn = throwSomeCoins(ba_rythm[i],4)
+    if baOn > 0:
+        #print melodyObj.voice[0][0]
         o.note_off(note_past_bs,60, 1)
-        o.note_on(chords[int(i/8)] + 48, int(np.random.normal(45,8)), 1)
-        note_past_bs = chords[int(i/8)] + 48
+        o.note_on(melodyObj.voice[int(chords[i] * 1.0 / 8)][chords[i]  % 8][0] + 36 , int(np.random.normal(25,8)), 1)
+        note_past_bs = melodyObj.voice[int(chords[i] * 1.0 / 8)][chords[i]  % 8][0] + 36
+
+        o.note_off(note_past_v1,60, 2)
+        o.note_on(melodyObj.voice[int(chords[i] * 1.0 / 8)][chords[i]  % 8][1] + 48 , int(np.random.normal(27,8)), 2)
+        note_past_v1 = melodyObj.voice[int(chords[i] * 1.0 / 8)][chords[i]  % 8][1] + 48
+
+        o.note_off(note_past_v2,60, 2)
+        o.note_on(melodyObj.voice[int(chords[i] * 1.0 / 8)][chords[i]  % 8][2] + 48 , int(np.random.normal(27,8)), 2)
+        note_past_v2 = melodyObj.voice[int(chords[i] * 1.0 / 8)][chords[i]  % 8][2] + 48
+
     i += 1
-    sleep(0.25)
+    sleep(sleepTime)
 o.note_on(60 ,60,0)
 o.note_on(48, 40, 1)
 sleep(4)
 
-input.close()
+#input.close()
 o.close()
 pygame.midi.quit()
 pygame.quit()

@@ -37,7 +37,7 @@ rythmWeight = np.array([
 softmax([0.5,0.5])
 ,softmax([0.4,0.5])
 ,softmax([0.5,0.5])
-,softmax([0.4,0.5])
+,softmax([0.4,0.8])
 ,softmax([0.5,0.5])
 ,softmax([0.6,0.5])
 ,softmax([0.5,0.5])
@@ -46,9 +46,23 @@ softmax([0.5,0.5])
 ,softmax([0.6,0.5])
 ,softmax([0.5,0.5])
 ])
+# out / loop loop + out = 1
+#rythmWeight = np.array([
+#softmax([0.5,0.5])
+#,softmax([0.4,0.5])
+#,softmax([0.5,0.5])
+#,softmax([0.4,0.5])
+#,softmax([0.5,0.5])
+#,softmax([0.6,0.5])
+#,softmax([0.5,0.5])
+#,softmax([0.6,0.5])
+#,softmax([0.5,0.5])
+#,softmax([0.6,0.5])
+#,softmax([0.5,0.5])
+#])
 
-parentRythmWeight = np.array(softmax([3,4,5,6,3,1,1,1.5,1.5,1])) # sum = 1
-
+parentRythmWeight = np.array(softmax([6,2,5,7,6,1,1,1.5,1.5,3])) # sum = 1
+#parentRythmWeight = np.array(softmax([3,4,5,6,3,1,1,1.5,1.5,1])) #
 
 def Create(bars_n):
     noteDuration = dice(parentRythmWeight)

@@ -19,7 +19,7 @@ while going:
     if i.poll():
         midi_events = i.read(10)
         if midi_events[0][0][0] == 144:
-            o.note_on(midi_events[0][0][1],99,0)
+            o.note_on(midi_events[0][0][1],99,9)
         print "full midi_events:" + str(midi_events)
         count += 1
     if count >= 100:
